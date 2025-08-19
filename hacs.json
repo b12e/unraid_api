@@ -1,5 +1,5 @@
 {
-    "name": "Unraid API",
-    "render_readme": true,
+    "name": "Unraid API (b12e)",
+    "render_readme": false,
     "homeassistant": "2024.10.0"
 }
