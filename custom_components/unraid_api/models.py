@@ -45,6 +45,7 @@ class QueryResponse(BaseModel):  # noqa: D101
     server: Server
     shares: list[Share]
     info: Info
+    metrics: Metrics
 
 
 class Array(BaseModel):  # noqa: D101

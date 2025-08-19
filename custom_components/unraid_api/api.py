@@ -34,7 +34,7 @@ class UnraidApiClient:
     ) -> dict:
         response = await self.session.post(
             self.endpoint,
-            json={"query": query, "variables": variables or {}},
+            json={"query": query.strip(), "variables": variables or {}},
             headers={
                 "x-api-key": self.api_key,
                 "Origin": self.host,
