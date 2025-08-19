@@ -92,15 +92,16 @@ class Share(BaseModel):  # noqa: D101
 
 
 class Info(BaseModel):  # noqa: D101
-    memory: MetricsMemory
     versions: InfoVersions
 
+class Metrics(BaseModel): # noqa: D101
+    memory: MetricsMemory
 
 class MetricsMemory(BaseModel):  # noqa: D101
     free: int
     total: int
     used: int
-    percentTotal: int
+    percent_total: int = Field(alias="percentTotal")
 
 
 class InfoVersions(BaseModel):  # noqa: D101
