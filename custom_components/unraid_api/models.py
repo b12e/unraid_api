@@ -99,7 +99,7 @@ class Info(BaseModel):  # noqa: D101
 class InfoMemory(BaseModel):  # noqa: D101
     free: int
     total: int
-    active: int
+    used: int
 
 
 class InfoVersions(BaseModel):  # noqa: D101
