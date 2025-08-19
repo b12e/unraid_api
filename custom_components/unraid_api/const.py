@@ -67,12 +67,16 @@ query Hass {
     floor
     luksStatus
   }
-  info {
+  metrics {
     memory {
-      free
-      total
-      active
+      used,
+      total,
+      free,
+      percentTotal
     }
+  }
+  
+  info {
     versions {
       unraid
     }
