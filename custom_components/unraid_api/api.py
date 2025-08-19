@@ -45,6 +45,7 @@ class UnraidApiClient:
         if "errors" in result:
             error_msg = ", ".join(entry.get("message") for entry in result["errors"])
             _LOGGER.error("Error in query response: %s", error_msg)
+            _LOGGER.error("Query used: %s", query)
             raise UnraidGraphQLError(error_msg)
         return result["data"]
 
