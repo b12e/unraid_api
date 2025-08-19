@@ -58,13 +58,6 @@ def calc_array_usage_percentage(coordinator: UnraidDataUpdateCoordinator) -> Sta
     return (used / total) * 100
 
 
-def calc_ram_usage_percentage(coordinator: UnraidDataUpdateCoordinator) -> StateType:
-    """Calculate the ram usage percentage."""
-    used = coordinator.data["data"].metrics.memory.used
-    total = coordinator.data["data"].metrics.memory.total
-    return (used / total) * 100
-
-
 def calc_disk_usage_percentage(disk: Disk) -> StateType:
     """Calculate the disk usage percentage."""
     return (disk.fs_used / disk.fs_size) * 100
@@ -117,17 +110,6 @@ SENSOR_DESCRIPTIONS: tuple[UnraidSensorEntityDescription, ...] = (
         suggested_display_precision=2,
         value_fn=lambda coordinator: coordinator.data["data"].array.capacity.kilobytes.used,
         entity_registry_enabled_default=False,
-    ),
-    UnraidSensorEntityDescription(
-        key="ram_usage",
-        native_unit_of_measurement=PERCENTAGE,
-        suggested_display_precision=2,
-        value_fn=calc_ram_usage_percentage,
-        extra_values_fn=lambda coordinator: {
-            "used": coordinator.data["data"].metrics.memory.used,
-            "free": coordinator.data["data"].metrics.memory.free,
-            "total": coordinator.data["data"].metrics.memory.total,
-        },
     ),
     UnraidSensorEntityDescription(
         key="ram_used",

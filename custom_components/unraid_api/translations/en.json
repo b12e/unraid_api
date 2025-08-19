@@ -67,6 +67,9 @@
             "ram_usage": {
                 "name": "RAM usage"
             },
+            "ram_usad_percentage": {
+                "name": "RAM used"
+            },
             "ram_used": {
                 "name": "RAM used"
             },

@@ -92,14 +92,15 @@ class Share(BaseModel):  # noqa: D101
 
 
 class Info(BaseModel):  # noqa: D101
-    memory: InfoMemory
+    memory: MetricsMemory
     versions: InfoVersions
 
 
-class InfoMemory(BaseModel):  # noqa: D101
+class MetricsMemory(BaseModel):  # noqa: D101
     free: int
     total: int
     used: int
+    percentTotal: int
 
 
 class InfoVersions(BaseModel):  # noqa: D101
