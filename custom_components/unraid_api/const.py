@@ -75,7 +75,6 @@ query Hass {
       percentTotal
     }
   }
-  
   info {
     versions {
       unraid
