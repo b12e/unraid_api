@@ -76,7 +76,7 @@ API_RESPONSE = {
             "memory": {"free": 415510528, "total": 16646950912, "used": 12746354688},
         },
         "info": {
-            "versions": {"unraid": "7.0.1"},
+            "versions": { "core": { "unraid": "7.0.1" } },
         },
     }
 }

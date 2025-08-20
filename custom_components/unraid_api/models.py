@@ -95,6 +95,12 @@ class Share(BaseModel):  # noqa: D101
 class Info(BaseModel):  # noqa: D101
     versions: InfoVersions
 
+class InfoVersions(BaseModel):  # noqa: D101
+    core: VersionsCore
+
+class VersionsCore(BaseModel): # noqa: D101
+    unraid: str
+    
 class Metrics(BaseModel): # noqa: D101
     memory: MetricsMemory
 
@@ -103,7 +109,3 @@ class MetricsMemory(BaseModel):  # noqa: D101
     used: int = Field(alias="active")
     total: int
     percent_total: float = Field(alias="percentTotal")
-
-
-class InfoVersions(BaseModel):  # noqa: D101
-    unraid: str

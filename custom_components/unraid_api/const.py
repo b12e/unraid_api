@@ -75,9 +75,11 @@ QUERY = """query Hass {
     }
   }
   info {
-    versions {
-      unraid
+      versions {
+        core {
+          unraid
+        }
+      }
     }
-  }
 }
 """

@@ -48,7 +48,7 @@ async def async_setup_entry(
     server_info = await api_client.query()
     device_info = DeviceInfo(
         identifiers={(DOMAIN, config_entry.entry_id)},
-        sw_version=server_info.info.versions.unraid,
+        sw_version=server_info.info.versions.core.unraid,
         name=server_info.server.name,
         configuration_url=server_info.server.localurl,
     )
