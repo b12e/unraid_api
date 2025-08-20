@@ -99,9 +99,8 @@ class Metrics(BaseModel): # noqa: D101
     memory: MetricsMemory
 
 class MetricsMemory(BaseModel):  # noqa: D101
-    free: int
+    free: int = Field(alias="available")
     total: int
-    used: int
     percent_total: float = Field(alias="percentTotal")
 
 
