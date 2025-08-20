@@ -12,8 +12,7 @@ PLATFORMS = [Platform.SENSOR]
 CONF_SHARES: Final[str] = "shares"
 CONF_DRIVES: Final[str] = "drives"
 
-QUERY = """
-query Hass {
+QUERY = """query Hass {
   server {
     localurl
     name
