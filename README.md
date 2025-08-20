@@ -1,3 +1,11 @@
+# Fork Notes
+This fork is a temporary solution while the original maintainer updates the plugin. 
+
+It adds support for RAM statistics - available, in use, total and percentage used. It also enables by default all sensors.
+
+Please refrain from using it in production and stick to the original.
+
+
 # Unraid
 
 The **Unraid API** integration allows users to integrate their [Unraid](https://www.home-connect.com/global) server using Unraids local GraphQL API.
