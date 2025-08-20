@@ -70,6 +70,7 @@ QUERY = """query Hass {
     memory {
       total
       available
+      active
       percentTotal
     }
   }
