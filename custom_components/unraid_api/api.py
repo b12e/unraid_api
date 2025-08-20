@@ -45,19 +45,6 @@ class UnraidApiClient:
             },
         )
         result = await response.json()
-        
-        # Generate equivalent curl command for debugging
-        curl_headers = " ".join([f'-H "{k}: {v}"' for k, v in {
-            "x-api-key": "***masked***",
-            "Origin": self.host,
-            "Content-Type": "application/json",
-        }.items()])
-    
-        curl_command = f"""curl -X POST {self.endpoint} {curl_headers} -d '{json.dumps(payload)}'"""
-    
-        _LOGGER.error("%s", curl_command)
-        result_string = json.dumps(result, indent=2)
-        _LOGGER.error("Response JSON: %s", result_string)
 
         if "errors" in result:
             error_msg = ", ".join(entry.get("message") for entry in result["errors"])

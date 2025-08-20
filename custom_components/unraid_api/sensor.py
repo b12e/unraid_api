@@ -131,7 +131,7 @@ SENSOR_DESCRIPTIONS: tuple[UnraidSensorEntityDescription, ...] = (
         key="ram_used_percentage",
         native_unit_of_measurement=PERCENTAGE,
         suggested_display_precision=2,
-        value_fn=lambda coordinator: coordinator.data["data"].metrics.memory.percentTotal,
+        value_fn=lambda coordinator: coordinator.data["data"].metrics.memory.percent_total,
     ),
 )
 
