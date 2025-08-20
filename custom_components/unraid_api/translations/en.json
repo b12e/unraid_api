@@ -73,6 +73,9 @@
             "ram_free": {
                 "name": "RAM free"
             },
+            "ram_total": {
+                "name": "RAM total"
+            },
             "disk_status": {
                 "name": "{disk_name} Status",
                 "state": {
