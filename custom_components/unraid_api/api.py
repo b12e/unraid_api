@@ -44,8 +44,9 @@ class UnraidApiClient:
         result = await response.json()
         _LOGGER.error("JSON response: %s", str(result))
 
-        raw_response = await response.text()
-        _LOGGER.error("API response: %s", raw_response)
+        import json
+        result_string = json.dumps(result, indent=2)
+        _LOGGER.error("Response JSON: %s", result_string)
 
         if "errors" in result:
             error_msg = ", ".join(entry.get("message") for entry in result["errors"])
