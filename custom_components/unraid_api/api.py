@@ -38,12 +38,11 @@ class UnraidApiClient:
             headers={
                 "x-api-key": self.api_key,
                 "Origin": self.host,
-                "content-type": "application/json",
             },
         )
         result = await response.json()
-        import json
-        _LOGGER.error("JSON response: %s", str(result))
+
+        import json        
         payload = {"query": query, "variables": variables or {}}
     
         # Generate equivalent curl command for debugging
@@ -53,11 +52,8 @@ class UnraidApiClient:
             "Content-Type": "application/json",
         }.items()])
     
-        curl_command = f"""curl -X POST {self.endpoint} \\
-        {curl_headers} \\
-        -d '{json.dumps(payload)}'"""
+        curl_command = f"""curl -X POST {self.endpoint} {curl_headers} -d '{json.dumps(payload)}'"""
     
-        _LOGGER.error("Equivalent curl command:")
         _LOGGER.error("%s", curl_command)
         result_string = json.dumps(result, indent=2)
         _LOGGER.error("Response JSON: %s", result_string)
@@ -65,9 +61,6 @@ class UnraidApiClient:
         if "errors" in result:
             error_msg = ", ".join(entry.get("message") for entry in result["errors"])
             _LOGGER.error("Error in query response: %s", error_msg)
-            _LOGGER.error("Query used: %s", query)
-            _LOGGER.error("Response status: %d", response.status)
-            _LOGGER.error("Response headers: %s", dict(response.headers))
             raise UnraidGraphQLError(error_msg)
         return result["data"]
 
