@@ -42,6 +42,8 @@ class UnraidApiClient:
             },
         )
         result = await response.json()
+        _LOGGER.error("JSON response: %s", str(result))
+
         raw_response = await response.text()
         _LOGGER.error("API response: %s", raw_response)
 
