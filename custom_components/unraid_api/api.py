@@ -34,7 +34,7 @@ class UnraidApiClient:
     ) -> dict:
         response = await self.session.post(
             self.endpoint,
-            json={"query": query.strip(), "variables": variables or {}},
+            json={"query": query, "variables": variables or {}},
             headers={
                 "x-api-key": self.api_key,
                 "Origin": self.host,
@@ -42,9 +42,23 @@ class UnraidApiClient:
             },
         )
         result = await response.json()
-        _LOGGER.error("JSON response: %s", str(result))
-
         import json
+        _LOGGER.error("JSON response: %s", str(result))
+        payload = {"query": query, "variables": variables or {}}
+    
+        # Generate equivalent curl command for debugging
+        curl_headers = " ".join([f'-H "{k}: {v}"' for k, v in {
+            "x-api-key": "***masked***",
+            "Origin": self.host,
+            "Content-Type": "application/json",
+        }.items()])
+    
+        curl_command = f"""curl -X POST {self.endpoint} \\
+        {curl_headers} \\
+        -d '{json.dumps(payload)}'"""
+    
+        _LOGGER.error("Equivalent curl command:")
+        _LOGGER.error("%s", curl_command)
         result_string = json.dumps(result, indent=2)
         _LOGGER.error("Response JSON: %s", result_string)
 
