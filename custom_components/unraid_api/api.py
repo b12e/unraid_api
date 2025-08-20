@@ -32,19 +32,20 @@ class UnraidApiClient:
         query: str,
         variables: dict[str, Any] | None = None,
     ) -> dict:
+        import json        
+        payload = {"query": query, "variables": variables or {}}
+
         response = await self.session.post(
             self.endpoint,
-            json={"query": query, "variables": variables or {}},
+            data=json.dumps(payload),
             headers={
                 "x-api-key": self.api_key,
                 "Origin": self.host,
+                "content-type": "application/json",
             },
         )
         result = await response.json()
-
-        import json        
-        payload = {"query": query, "variables": variables or {}}
-    
+        
         # Generate equivalent curl command for debugging
         curl_headers = " ".join([f'-H "{k}: {v}"' for k, v in {
             "x-api-key": "***masked***",
