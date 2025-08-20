@@ -68,9 +68,8 @@ QUERY = """query Hass {
   }
   metrics {
     memory {
-      used
       total
-      free
+      available
       percentTotal
     }
   }

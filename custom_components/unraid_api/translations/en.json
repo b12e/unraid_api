@@ -64,11 +64,8 @@
             "array_used": {
                 "name": "Array Used space"
             },
-            "ram_usage": {
-                "name": "RAM usage"
-            },
-            "ram_usad_percentage": {
-                "name": "RAM used"
+            "ram_used_percentage": {
+                "name": "RAM usage percentage"
             },
             "ram_used": {
                 "name": "RAM used"
