@@ -3,7 +3,7 @@ This fork is a temporary solution while the original maintainer updates the plug
 
 It adds support for RAM statistics - available, in use, total and percentage used. It also enables by default all sensors.
 
-Please refrain from using it in production and stick to the original.
+Please refrain from using it in production and stick to the original: https://github.com/chris-mc1
 
 
 ## Prerequisites
