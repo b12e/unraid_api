@@ -117,7 +117,7 @@ SENSOR_DESCRIPTIONS: tuple[UnraidSensorEntityDescription, ...] = (
         suggested_unit_of_measurement=UnitOfInformation.GIBIBYTES,
         device_class=SensorDeviceClass.DATA_SIZE,
         suggested_display_precision=2,
-        value_fn=lambda coordinator: coordinator.data["data"].array.capacity.kilobytes.used,
+        value_fn=lambda coordinator: coordinator.data["data"].metrics.memory.used,
     ),
     UnraidSensorEntityDescription(
         key="ram_free",
