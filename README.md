@@ -1,9 +1,9 @@
 # Fork Notes
-This fork is a temporary solution while the original maintainer updates the plugin. 
+This fork is a customized version of [this original](https://github.com/chris-mc1/unraid_api).
 
-It adds support for RAM statistics - available, in use, total and percentage used. It also enables by default all sensors.
+It adds support for RAM statistics - available, in use, total and percentage used. It also enables by default all sensors and changes some names.
 
-Please refrain from using it in production and stick to the original: https://github.com/chris-mc1/unraid_api
+Please refrain from using it in production and stick to the original linked before.
 
 
 ## Prerequisites
