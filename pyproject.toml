@@ -1,5 +1,5 @@
 [project]
-version = "1.0.3"
+version = "1.0.4"
 name = "unraid_api"
 authors = [{ name = "b12e" }]
 description = "Unraid integration for Homeassistant"
