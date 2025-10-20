@@ -9,6 +9,7 @@ from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
     SensorEntityDescription,
+    SensorStateClass,
 )
 from homeassistant.const import PERCENTAGE, EntityCategory, UnitOfInformation, UnitOfTemperature
 from homeassistant.core import callback
@@ -88,6 +89,7 @@ SENSOR_DESCRIPTIONS: tuple[UnraidSensorEntityDescription, ...] = (
         key="array_usage",
         native_unit_of_measurement=PERCENTAGE,
         suggested_display_precision=2,
+        state_class=SensorStateClass.MEASUREMENT,
         value_fn=calc_array_usage_percentage,
         extra_values_fn=lambda coordinator: {
             "used": coordinator.data["data"].array.capacity.kilobytes.used,
@@ -101,6 +103,7 @@ SENSOR_DESCRIPTIONS: tuple[UnraidSensorEntityDescription, ...] = (
         native_unit_of_measurement=UnitOfInformation.KILOBYTES,
         suggested_unit_of_measurement=UnitOfInformation.GIGABYTES,
         suggested_display_precision=2,
+        state_class=SensorStateClass.MEASUREMENT,
         value_fn=lambda coordinator: coordinator.data["data"].array.capacity.kilobytes.free,
     ),
     UnraidSensorEntityDescription(
@@ -109,6 +112,7 @@ SENSOR_DESCRIPTIONS: tuple[UnraidSensorEntityDescription, ...] = (
         native_unit_of_measurement=UnitOfInformation.KILOBYTES,
         suggested_unit_of_measurement=UnitOfInformation.GIGABYTES,
         suggested_display_precision=2,
+        state_class=SensorStateClass.MEASUREMENT,
         value_fn=lambda coordinator: coordinator.data["data"].array.capacity.kilobytes.used,
     ),
     UnraidSensorEntityDescription(
@@ -117,6 +121,7 @@ SENSOR_DESCRIPTIONS: tuple[UnraidSensorEntityDescription, ...] = (
         suggested_unit_of_measurement=UnitOfInformation.GIBIBYTES,
         device_class=SensorDeviceClass.DATA_SIZE,
         suggested_display_precision=2,
+        state_class=SensorStateClass.MEASUREMENT,
         value_fn=lambda coordinator: coordinator.data["data"].metrics.memory.used,
     ),
     UnraidSensorEntityDescription(
@@ -125,6 +130,7 @@ SENSOR_DESCRIPTIONS: tuple[UnraidSensorEntityDescription, ...] = (
         suggested_unit_of_measurement=UnitOfInformation.GIBIBYTES,
         device_class=SensorDeviceClass.DATA_SIZE,
         suggested_display_precision=2,
+        state_class=SensorStateClass.MEASUREMENT,
         value_fn=lambda coordinator: coordinator.data["data"].metrics.memory.total,
         entity_registry_enabled_default=False,
 
@@ -135,12 +141,14 @@ SENSOR_DESCRIPTIONS: tuple[UnraidSensorEntityDescription, ...] = (
         native_unit_of_measurement=UnitOfInformation.BYTES,
         suggested_unit_of_measurement=UnitOfInformation.GIBIBYTES,
         suggested_display_precision=2,
+        state_class=SensorStateClass.MEASUREMENT,
         value_fn=lambda coordinator: coordinator.data["data"].metrics.memory.free,
     ),
     UnraidSensorEntityDescription(
         key="ram_used_percentage",
         native_unit_of_measurement=PERCENTAGE,
         suggested_display_precision=2,
+        state_class=SensorStateClass.MEASUREMENT,
         value_fn=lambda coordinator: coordinator.data["data"].metrics.memory.percent_total,
     ),
 )
@@ -167,6 +175,7 @@ DISK_SENSOR_DESCRIPTIONS: tuple[UnraidDiskSensorEntityDescription, ...] = (
         key="disk_temp",
         device_class=SensorDeviceClass.TEMPERATURE,
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        state_class=SensorStateClass.MEASUREMENT,
         value_fn=lambda disk: disk.temp,
     ),
 )
@@ -176,6 +185,7 @@ DISK_SENSOR_SPACE_DESCRIPTIONS: tuple[UnraidDiskSensorEntityDescription, ...] = 
         key="disk_usage",
         native_unit_of_measurement=PERCENTAGE,
         suggested_display_precision=2,
+        state_class=SensorStateClass.MEASUREMENT,
         value_fn=calc_disk_usage_percentage,
     ),
     UnraidDiskSensorEntityDescription(
@@ -184,6 +194,7 @@ DISK_SENSOR_SPACE_DESCRIPTIONS: tuple[UnraidDiskSensorEntityDescription, ...] = 
         native_unit_of_measurement=UnitOfInformation.KILOBYTES,
         suggested_unit_of_measurement=UnitOfInformation.GIGABYTES,
         suggested_display_precision=2,
+        state_class=SensorStateClass.MEASUREMENT,
         value_fn=lambda disk: disk.fs_free,
     ),
     UnraidDiskSensorEntityDescription(
@@ -192,6 +203,7 @@ DISK_SENSOR_SPACE_DESCRIPTIONS: tuple[UnraidDiskSensorEntityDescription, ...] = 
         native_unit_of_measurement=UnitOfInformation.KILOBYTES,
         suggested_unit_of_measurement=UnitOfInformation.GIGABYTES,
         suggested_display_precision=2,
+        state_class=SensorStateClass.MEASUREMENT,
         value_fn=lambda disk: disk.fs_used,
     ),
 )
@@ -204,6 +216,7 @@ SHARE_SENSOR_DESCRIPTIONS: tuple[UnraidShareSensorEntityDescription, ...] = (
         native_unit_of_measurement=UnitOfInformation.KILOBYTES,
         suggested_unit_of_measurement=UnitOfInformation.GIGABYTES,
         suggested_display_precision=2,
+        state_class=SensorStateClass.MEASUREMENT,
         value_fn=lambda share: share.free,
         extra_values_fn=lambda share: {
             "used": share.used,

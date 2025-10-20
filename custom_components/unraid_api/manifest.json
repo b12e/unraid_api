@@ -2,15 +2,15 @@
   "domain": "unraid_api",
   "name": "Unraid API",
   "codeowners": [
-    "@chris-mc1"
+    "@b12e"
   ],
   "config_flow": true,
-  "documentation": "https://github.com/chris-mc1/unraid_api",
+  "documentation": "https://github.com/b12e/unraid_api",
   "integration_type": "device",
   "iot_class": "local_polling",
-  "issue_tracker": "https://github.com/chris-mc1/unraid_api/issues",
+  "issue_tracker": "https://github.com/b12e/unraid_api/issues",
   "loggers": [
     "custom_components.unraid_api"
   ],
-  "version": "1.0.1"
+  "version": "1.0.2"
 }

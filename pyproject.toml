@@ -2,7 +2,7 @@
 version = "1.0.4"
 name = "unraid_api"
 authors = [{ name = "b12e" }]
-description = "Unraid integration for Homeassistant"
+description = "Unraid integration for Homeassistant (fork)"
 readme = "README.md"
 requires-python = ">=3.13.2"
 dependencies = ["aiohttp>=3.11.13"]
