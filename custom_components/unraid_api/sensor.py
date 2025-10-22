@@ -56,14 +56,16 @@ def calc_array_usage_percentage(coordinator: UnraidDataUpdateCoordinator) -> Sta
     """Calculate the array usage percentage."""
     used = coordinator.data["data"].array.capacity.kilobytes.used
     total = coordinator.data["data"].array.capacity.kilobytes.total
-    return (used / total) * 100
+    if total == 0:
+        return 0
+    return round((used / total) * 100, 2)
 
 
 def calc_disk_usage_percentage(disk: Disk) -> StateType:
     """Calculate the disk usage percentage."""
     if disk.fs_used is None or disk.fs_size is None or disk.fs_size == 0:
         return 0
-    return (disk.fs_used / disk.fs_size) * 100
+    return round((disk.fs_used / disk.fs_size) * 100, 2)
 
 
 SENSOR_DESCRIPTIONS: tuple[UnraidSensorEntityDescription, ...] = (
@@ -281,17 +283,37 @@ class UnraidSensor(CoordinatorEntity[UnraidDataUpdateCoordinator], SensorEntity)
         self.entity_description = description
         self._attr_unique_id = f"{config_entry.entry_id}-{description.key}"
         self._attr_translation_key = description.key
-        self._attr_available = False
         self._attr_device_info = config_entry.runtime_data.device_info
 
     @property
+    def available(self) -> bool:
+        """Return if entity is available."""
+        return self.coordinator.last_update_success
+
+    @property
     def native_value(self) -> StateType:
-        return self.entity_description.value_fn(self.coordinator)
+        try:
+            value = self.entity_description.value_fn(self.coordinator)
+            # Return None for invalid numeric values to prevent statistics corruption
+            if value is not None and isinstance(value, (int, float)) and (
+                value != value or  # NaN check
+                value == float('inf') or
+                value == float('-inf')
+            ):
+                return None
+            return value
+        except (KeyError, AttributeError, TypeError, ZeroDivisionError) as err:
+            _LOGGER.debug("Error getting value for %s: %s", self.entity_id, err)
+            return None
 
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:
         if self.entity_description.extra_values_fn:
-            return self.entity_description.extra_values_fn(self.coordinator)
+            try:
+                return self.entity_description.extra_values_fn(self.coordinator)
+            except (KeyError, AttributeError, TypeError) as err:
+                _LOGGER.debug("Error getting attributes for %s: %s", self.entity_id, err)
+                return None
         return None
 
 
@@ -315,19 +337,43 @@ class UnraidDiskSensor(CoordinatorEntity[UnraidDataUpdateCoordinator], SensorEnt
         self._attr_translation_placeholders = {
             "disk_name": self.coordinator.data["disks"][self.disk_id].name
         }
-        self._attr_available = False
         self._attr_device_info = config_entry.runtime_data.device_info
 
     @property
+    def available(self) -> bool:
+        """Return if entity is available."""
+        return self.coordinator.last_update_success and self.disk_id in self.coordinator.data.get("disks", {})
+
+    @property
     def native_value(self) -> StateType:
-        return self.entity_description.value_fn(self.coordinator.data["disks"][self.disk_id])
+        try:
+            if self.disk_id not in self.coordinator.data.get("disks", {}):
+                return None
+            value = self.entity_description.value_fn(self.coordinator.data["disks"][self.disk_id])
+            # Return None for invalid numeric values to prevent statistics corruption
+            if value is not None and isinstance(value, (int, float)) and (
+                value != value or  # NaN check
+                value == float('inf') or
+                value == float('-inf')
+            ):
+                return None
+            return value
+        except (KeyError, AttributeError, TypeError, ZeroDivisionError) as err:
+            _LOGGER.debug("Error getting value for %s: %s", self.entity_id, err)
+            return None
 
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:
         if self.entity_description.extra_values_fn:
-            return self.entity_description.extra_values_fn(
-                self.coordinator.data["disks"][self.disk_id]
-            )
+            try:
+                if self.disk_id not in self.coordinator.data.get("disks", {}):
+                    return None
+                return self.entity_description.extra_values_fn(
+                    self.coordinator.data["disks"][self.disk_id]
+                )
+            except (KeyError, AttributeError, TypeError) as err:
+                _LOGGER.debug("Error getting attributes for %s: %s", self.entity_id, err)
+                return None
         return None
 
 
@@ -349,17 +395,41 @@ class UnraidShareSensor(CoordinatorEntity[UnraidDataUpdateCoordinator], SensorEn
         self._attr_unique_id = f"{config_entry.entry_id}-{description.key}-{self.share_name}"
         self._attr_translation_key = description.key
         self._attr_translation_placeholders = {"share_name": self.share_name}
-        self._attr_available = False
         self._attr_device_info = config_entry.runtime_data.device_info
 
     @property
+    def available(self) -> bool:
+        """Return if entity is available."""
+        return self.coordinator.last_update_success and self.share_name in self.coordinator.data.get("shares", {})
+
+    @property
     def native_value(self) -> StateType:
-        return self.entity_description.value_fn(self.coordinator.data["shares"][self.share_name])
+        try:
+            if self.share_name not in self.coordinator.data.get("shares", {}):
+                return None
+            value = self.entity_description.value_fn(self.coordinator.data["shares"][self.share_name])
+            # Return None for invalid numeric values to prevent statistics corruption
+            if value is not None and isinstance(value, (int, float)) and (
+                value != value or  # NaN check
+                value == float('inf') or
+                value == float('-inf')
+            ):
+                return None
+            return value
+        except (KeyError, AttributeError, TypeError, ZeroDivisionError) as err:
+            _LOGGER.debug("Error getting value for %s: %s", self.entity_id, err)
+            return None
 
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:
         if self.entity_description.extra_values_fn:
-            return self.entity_description.extra_values_fn(
-                self.coordinator.data["shares"][self.share_name]
-            )
+            try:
+                if self.share_name not in self.coordinator.data.get("shares", {}):
+                    return None
+                return self.entity_description.extra_values_fn(
+                    self.coordinator.data["shares"][self.share_name]
+                )
+            except (KeyError, AttributeError, TypeError) as err:
+                _LOGGER.debug("Error getting attributes for %s: %s", self.entity_id, err)
+                return None
         return None

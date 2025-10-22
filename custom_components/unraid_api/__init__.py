@@ -65,7 +65,6 @@ async def async_setup_entry(
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: UnraidConfigEntry) -> bool:
-    """Unload qBittorrent config entry."""
     if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
         del entry.runtime_data
     return unload_ok
