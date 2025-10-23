@@ -1,3 +1,4 @@
 .DS_Store
 /custom_components/unraid_api/__pycache__
 .github/workflows/README.md
+STATISTICS_DEBUG.md
