@@ -284,6 +284,13 @@ class UnraidSensor(CoordinatorEntity[UnraidDataUpdateCoordinator], SensorEntity)
         self._attr_unique_id = f"{config_entry.entry_id}-{description.key}"
         self._attr_translation_key = description.key
         self._attr_device_info = config_entry.runtime_data.device_info
+        # Explicitly set state_class for statistics
+        if description.state_class:
+            self._attr_state_class = description.state_class
+        if description.device_class:
+            self._attr_device_class = description.device_class
+        if description.native_unit_of_measurement:
+            self._attr_native_unit_of_measurement = description.native_unit_of_measurement
 
     @property
     def available(self) -> bool:
@@ -300,10 +307,14 @@ class UnraidSensor(CoordinatorEntity[UnraidDataUpdateCoordinator], SensorEntity)
                 value == float('inf') or
                 value == float('-inf')
             ):
+                _LOGGER.warning("Invalid numeric value for %s: %s", self.entity_id, value)
                 return None
+            if value is not None and self.state_class == SensorStateClass.MEASUREMENT:
+                _LOGGER.debug("%s value: %s (state_class: %s, available: %s)",
+                             self.entity_id, value, self.state_class, self.available)
             return value
         except (KeyError, AttributeError, TypeError, ZeroDivisionError) as err:
-            _LOGGER.debug("Error getting value for %s: %s", self.entity_id, err)
+            _LOGGER.warning("Error getting value for %s: %s", self.entity_id, err)
             return None
 
     @property
@@ -338,6 +349,13 @@ class UnraidDiskSensor(CoordinatorEntity[UnraidDataUpdateCoordinator], SensorEnt
             "disk_name": self.coordinator.data["disks"][self.disk_id].name
         }
         self._attr_device_info = config_entry.runtime_data.device_info
+        # Explicitly set state_class for statistics
+        if description.state_class:
+            self._attr_state_class = description.state_class
+        if description.device_class:
+            self._attr_device_class = description.device_class
+        if description.native_unit_of_measurement:
+            self._attr_native_unit_of_measurement = description.native_unit_of_measurement
 
     @property
     def available(self) -> bool:
@@ -396,6 +414,13 @@ class UnraidShareSensor(CoordinatorEntity[UnraidDataUpdateCoordinator], SensorEn
         self._attr_translation_key = description.key
         self._attr_translation_placeholders = {"share_name": self.share_name}
         self._attr_device_info = config_entry.runtime_data.device_info
+        # Explicitly set state_class for statistics
+        if description.state_class:
+            self._attr_state_class = description.state_class
+        if description.device_class:
+            self._attr_device_class = description.device_class
+        if description.native_unit_of_measurement:
+            self._attr_native_unit_of_measurement = description.native_unit_of_measurement
 
     @property
     def available(self) -> bool:
