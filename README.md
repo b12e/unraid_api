@@ -31,3 +31,6 @@ Please refrain from using it in production and stick to the original linked befo
 - API Key: API Key for the Unraid API
 - Monitor Shares: Create Entities for each Network Share
 - Monitor Disks: Create Entities for each Disk
+
+
+"Unraid® is a trademark of Lime Technology, Inc. Not affiliated.
