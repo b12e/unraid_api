@@ -12,7 +12,8 @@
             "options": {
                 "data": {
                     "shares": "Monitor Shares",
-                    "drives": "Monitor Disks"
+                    "drives": "Monitor Disks",
+                    "temperature": "Monitor Temperature Sensors"
                 }
             },
             "reauth_key": {
@@ -23,7 +24,8 @@
             "reconfigure": {
                 "data": {
                     "shares": "Monitor Shares",
-                    "drives": "Monitor Disks"
+                    "drives": "Monitor Disks",
+                    "temperature": "Monitor Temperature Sensors"
                 }
             }
         },
@@ -104,6 +106,18 @@
             },
             "share_free": {
                 "name": "{share_name} Free space"
+            },
+            "cpu_usage": {
+                "name": "CPU usage"
+            },
+            "cpu_temp": {
+                "name": "CPU temperature"
+            },
+            "cpu_power": {
+                "name": "CPU power"
+            },
+            "temp_sensor": {
+                "name": "{sensor_name} Temperature"
             }
         }
     }

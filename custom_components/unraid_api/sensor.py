@@ -15,9 +15,9 @@ from homeassistant.const import PERCENTAGE, EntityCategory, UnitOfInformation, U
 from homeassistant.core import callback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import CONF_DRIVES, CONF_SHARES
+from .const import CONF_DRIVES, CONF_SHARES, CONF_TEMPERATURE
 from .coordinator import UnraidDataUpdateCoordinator
-from .models import ArrayDiskType, Disk, Share
+from .models import ArrayDiskType, Disk, Share, TemperatureSensor
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -50,6 +50,13 @@ class UnraidShareSensorEntityDescription(SensorEntityDescription, frozen_or_thaw
 
     value_fn: Callable[[Share], StateType]
     extra_values_fn: Callable[[Share], dict[str, Any]] | None = None
+
+
+class UnraidTempSensorEntityDescription(SensorEntityDescription, frozen_or_thawed=True):
+    """Description for Unraid Temperature Sensor Entity."""
+
+    value_fn: Callable[[TemperatureSensor], StateType]
+    extra_values_fn: Callable[[TemperatureSensor], dict[str, Any]] | None = None
 
 
 def calc_array_usage_percentage(coordinator: UnraidDataUpdateCoordinator) -> StateType:
@@ -153,6 +160,48 @@ SENSOR_DESCRIPTIONS: tuple[UnraidSensorEntityDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
         value_fn=lambda coordinator: coordinator.data["data"].metrics.memory.percent_total,
     ),
+    UnraidSensorEntityDescription(
+        key="cpu_usage",
+        native_unit_of_measurement=PERCENTAGE,
+        suggested_display_precision=1,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=lambda coordinator: (
+            coordinator.data["data"].metrics.cpu.percent_total
+            if coordinator.data["data"].metrics.cpu
+            else None
+        ),
+    ),
+    UnraidSensorEntityDescription(
+        key="cpu_temp",
+        device_class=SensorDeviceClass.TEMPERATURE,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        suggested_display_precision=1,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=lambda coordinator: (
+            coordinator.data["data"].info.cpu.packages.temp[0]
+            if coordinator.data["data"].info.cpu
+            and coordinator.data["data"].info.cpu.packages.temp
+            else None
+        ),
+        extra_values_fn=lambda coordinator: (
+            {f"package_{i}": t for i, t in enumerate(coordinator.data["data"].info.cpu.packages.temp)}
+            if coordinator.data["data"].info.cpu
+            and coordinator.data["data"].info.cpu.packages.temp
+            else None
+        ),
+    ),
+    UnraidSensorEntityDescription(
+        key="cpu_power",
+        device_class=SensorDeviceClass.POWER,
+        native_unit_of_measurement="W",
+        suggested_display_precision=1,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=lambda coordinator: (
+            coordinator.data["data"].info.cpu.packages.total_power
+            if coordinator.data["data"].info.cpu
+            else None
+        ),
+    ),
 )
 
 DISK_SENSOR_DESCRIPTIONS: tuple[UnraidDiskSensorEntityDescription, ...] = (
@@ -229,6 +278,22 @@ SHARE_SENSOR_DESCRIPTIONS: tuple[UnraidShareSensorEntityDescription, ...] = (
     ),
 )
 
+TEMP_SENSOR_DESCRIPTIONS: tuple[UnraidTempSensorEntityDescription, ...] = (
+    UnraidTempSensorEntityDescription(
+        key="temp_sensor",
+        device_class=SensorDeviceClass.TEMPERATURE,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        suggested_display_precision=1,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=lambda sensor: sensor.current.value,
+        extra_values_fn=lambda sensor: {
+            "type": sensor.type,
+            "warning": sensor.warning,
+            "critical": sensor.critical,
+        },
+    ),
+)
+
 
 async def async_setup_entry(
     hass: HomeAssistant,  # noqa: ARG001
@@ -242,13 +307,13 @@ async def async_setup_entry(
     @callback
     def add_disk_callback(disk: Disk) -> None:
         _LOGGER.debug("Adding new Disk: %s", disk.name)
-        entities = [
-            UnraidDiskSensor(description, config_entry, disk.id)
+        entities: list[UnraidDiskSensor] = [
+            UnraidDiskSensor(description, config_entry, disk.name)
             for description in DISK_SENSOR_DESCRIPTIONS
         ]
         if disk.type != ArrayDiskType.Parity:
             entities.extend(
-                UnraidDiskSensor(description, config_entry, disk.id)
+                UnraidDiskSensor(description, config_entry, disk.name)
                 for description in DISK_SENSOR_SPACE_DESCRIPTIONS
             )
         async_add_entites(entities)
@@ -262,10 +327,21 @@ async def async_setup_entry(
         ]
         async_add_entites(entities)
 
+    @callback
+    def add_temp_sensor_callback(sensor: TemperatureSensor) -> None:
+        _LOGGER.debug("Adding new Temperature Sensor: %s", sensor.name)
+        entities = [
+            UnraidTempSensor(description, config_entry, sensor.name)
+            for description in TEMP_SENSOR_DESCRIPTIONS
+        ]
+        async_add_entites(entities)
+
     if config_entry.options[CONF_DRIVES]:
         config_entry.runtime_data.coordinator.subscribe_disks(add_disk_callback)
     if config_entry.options[CONF_SHARES]:
         config_entry.runtime_data.coordinator.subscribe_shares(add_share_callback)
+    if config_entry.options.get(CONF_TEMPERATURE, True):
+        config_entry.runtime_data.coordinator.subscribe_temp_sensors(add_temp_sensor_callback)
 
 
 class UnraidSensor(CoordinatorEntity[UnraidDataUpdateCoordinator], SensorEntity):
@@ -338,18 +414,15 @@ class UnraidDiskSensor(CoordinatorEntity[UnraidDataUpdateCoordinator], SensorEnt
         self,
         description: UnraidDiskSensorEntityDescription,
         config_entry: UnraidConfigEntry,
-        disk_id: str,
+        disk_name: str,
     ) -> None:
         super().__init__(config_entry.runtime_data.coordinator)
-        self.disk_id = disk_id
+        self.disk_name = disk_name
         self.entity_description = description
-        self._attr_unique_id = f"{config_entry.entry_id}-{description.key}-{self.disk_id}"
+        self._attr_unique_id = f"{config_entry.entry_id}-{description.key}-{self.disk_name}"
         self._attr_translation_key = description.key
-        self._attr_translation_placeholders = {
-            "disk_name": self.coordinator.data["disks"][self.disk_id].name
-        }
+        self._attr_translation_placeholders = {"disk_name": self.disk_name}
         self._attr_device_info = config_entry.runtime_data.device_info
-        # Explicitly set state_class for statistics
         if description.state_class:
             self._attr_state_class = description.state_class
         if description.device_class:
@@ -360,15 +433,14 @@ class UnraidDiskSensor(CoordinatorEntity[UnraidDataUpdateCoordinator], SensorEnt
     @property
     def available(self) -> bool:
         """Return if entity is available."""
-        return self.coordinator.last_update_success and self.disk_id in self.coordinator.data.get("disks", {})
+        return self.coordinator.last_update_success and self.disk_name in self.coordinator.data.get("disks", {})
 
     @property
     def native_value(self) -> StateType:
         try:
-            if self.disk_id not in self.coordinator.data.get("disks", {}):
+            if self.disk_name not in self.coordinator.data.get("disks", {}):
                 return None
-            value = self.entity_description.value_fn(self.coordinator.data["disks"][self.disk_id])
-            # Return None for invalid numeric values to prevent statistics corruption
+            value = self.entity_description.value_fn(self.coordinator.data["disks"][self.disk_name])
             if value is not None and isinstance(value, (int, float)) and (
                 value != value or  # NaN check
                 value == float('inf') or
@@ -384,10 +456,10 @@ class UnraidDiskSensor(CoordinatorEntity[UnraidDataUpdateCoordinator], SensorEnt
     def extra_state_attributes(self) -> dict[str, Any] | None:
         if self.entity_description.extra_values_fn:
             try:
-                if self.disk_id not in self.coordinator.data.get("disks", {}):
+                if self.disk_name not in self.coordinator.data.get("disks", {}):
                     return None
                 return self.entity_description.extra_values_fn(
-                    self.coordinator.data["disks"][self.disk_id]
+                    self.coordinator.data["disks"][self.disk_name]
                 )
             except (KeyError, AttributeError, TypeError) as err:
                 _LOGGER.debug("Error getting attributes for %s: %s", self.entity_id, err)
@@ -454,6 +526,77 @@ class UnraidShareSensor(CoordinatorEntity[UnraidDataUpdateCoordinator], SensorEn
                 return self.entity_description.extra_values_fn(
                     self.coordinator.data["shares"][self.share_name]
                 )
+            except (KeyError, AttributeError, TypeError) as err:
+                _LOGGER.debug("Error getting attributes for %s: %s", self.entity_id, err)
+                return None
+        return None
+
+
+class UnraidTempSensor(CoordinatorEntity[UnraidDataUpdateCoordinator], SensorEntity):
+    """Sensor for Unraid Temperature readings."""
+
+    entity_description: UnraidTempSensorEntityDescription
+    _attr_has_entity_name = True
+
+    def __init__(
+        self,
+        description: UnraidTempSensorEntityDescription,
+        config_entry: UnraidConfigEntry,
+        sensor_name: str,
+    ) -> None:
+        super().__init__(config_entry.runtime_data.coordinator)
+        self.sensor_name = sensor_name
+        self.entity_description = description
+        self._attr_unique_id = f"{config_entry.entry_id}-{description.key}-{self.sensor_name}"
+        self._attr_translation_key = description.key
+        self._attr_translation_placeholders = {"sensor_name": self.sensor_name}
+        self._attr_device_info = config_entry.runtime_data.device_info
+        if description.state_class:
+            self._attr_state_class = description.state_class
+        if description.device_class:
+            self._attr_device_class = description.device_class
+        if description.native_unit_of_measurement:
+            self._attr_native_unit_of_measurement = description.native_unit_of_measurement
+
+    def _get_sensor_data(self) -> TemperatureSensor | None:
+        """Find this sensor in the temperature metrics data."""
+        temp_metrics = self.coordinator.data["data"].metrics.temperature
+        if temp_metrics is None:
+            return None
+        for sensor in temp_metrics.sensors:
+            if sensor.name == self.sensor_name:
+                return sensor
+        return None
+
+    @property
+    def available(self) -> bool:
+        """Return if entity is available."""
+        return self.coordinator.last_update_success and self._get_sensor_data() is not None
+
+    @property
+    def native_value(self) -> StateType:
+        try:
+            sensor = self._get_sensor_data()
+            if sensor is None:
+                return None
+            value = self.entity_description.value_fn(sensor)
+            if value is not None and isinstance(value, (int, float)) and (
+                value != value or value == float('inf') or value == float('-inf')
+            ):
+                return None
+            return value
+        except (KeyError, AttributeError, TypeError, ZeroDivisionError) as err:
+            _LOGGER.debug("Error getting value for %s: %s", self.entity_id, err)
+            return None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        if self.entity_description.extra_values_fn:
+            try:
+                sensor = self._get_sensor_data()
+                if sensor is None:
+                    return None
+                return self.entity_description.extra_values_fn(sensor)
             except (KeyError, AttributeError, TypeError) as err:
                 _LOGGER.debug("Error getting attributes for %s: %s", self.entity_id, err)
                 return None

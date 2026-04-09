@@ -16,6 +16,7 @@ from homeassistant.helpers.entity import DeviceInfo
 from .api import UnraidApiClient
 from .const import DOMAIN, PLATFORMS
 from .coordinator import UnraidDataUpdateCoordinator
+from .websocket import UnraidWebSocketClient
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -40,10 +41,11 @@ async def async_setup_entry(
 ) -> bool:
     """Set up this integration using config entry."""
     _LOGGER.debug("Setting up %s", config_entry.data[CONF_HOST])
+    session = async_get_clientsession(hass, config_entry.data[CONF_VERIFY_SSL])
     api_client = UnraidApiClient(
         host=config_entry.data[CONF_HOST],
         api_key=config_entry.data[CONF_API_KEY],
-        session=async_get_clientsession(hass, config_entry.data[CONF_VERIFY_SSL]),
+        session=session,
     )
     server_info = await api_client.query()
     device_info = DeviceInfo(
@@ -52,7 +54,13 @@ async def async_setup_entry(
         name=server_info.server.name,
         configuration_url=server_info.server.localurl,
     )
-    coordinator = UnraidDataUpdateCoordinator(hass, config_entry, api_client)
+    ws_client = UnraidWebSocketClient(
+        host=config_entry.data[CONF_HOST],
+        api_key=config_entry.data[CONF_API_KEY],
+        session=session,
+        verify_ssl=config_entry.data[CONF_VERIFY_SSL],
+    )
+    coordinator = UnraidDataUpdateCoordinator(hass, config_entry, api_client, ws_client)
     await coordinator.async_config_entry_first_refresh()
 
     config_entry.runtime_data = UnraidData(
@@ -66,5 +74,6 @@ async def async_setup_entry(
 
 async def async_unload_entry(hass: HomeAssistant, entry: UnraidConfigEntry) -> bool:
     if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
+        await entry.runtime_data.coordinator.async_shutdown()
         del entry.runtime_data
     return unload_ok

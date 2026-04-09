@@ -94,18 +94,59 @@ class Share(BaseModel):  # noqa: D101
 
 class Info(BaseModel):  # noqa: D101
     versions: InfoVersions
+    cpu: InfoCpu | None = None
+
 
 class InfoVersions(BaseModel):  # noqa: D101
     core: VersionsCore
 
-class VersionsCore(BaseModel): # noqa: D101
+
+class VersionsCore(BaseModel):  # noqa: D101
     unraid: str
-    
-class Metrics(BaseModel): # noqa: D101
+
+
+class InfoCpu(BaseModel):  # noqa: D101
+    packages: CpuPackages
+
+
+class CpuPackages(BaseModel):  # noqa: D101
+    temp: list[float]
+    total_power: float = Field(alias="totalPower")
+
+
+class Metrics(BaseModel):  # noqa: D101
     memory: MetricsMemory
+    cpu: CpuUtilization | None = None
+    temperature: TemperatureMetrics | None = None
+
+
+class CpuUtilization(BaseModel):  # noqa: D101
+    percent_total: float = Field(alias="percentTotal")
+
 
 class MetricsMemory(BaseModel):  # noqa: D101
     free: int = Field(alias="available")
     used: int = Field(alias="active")
     total: int
     percent_total: float = Field(alias="percentTotal")
+
+
+class TemperatureReading(BaseModel):  # noqa: D101
+    value: float
+
+
+class TemperatureSensor(BaseModel):  # noqa: D101
+    name: str
+    type: str
+    current: TemperatureReading
+    warning: float | None = None
+    critical: float | None = None
+
+
+class TemperatureSummary(BaseModel):  # noqa: D101
+    average: float
+
+
+class TemperatureMetrics(BaseModel):  # noqa: D101
+    sensors: list[TemperatureSensor]
+    summary: TemperatureSummary

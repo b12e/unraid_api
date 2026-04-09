@@ -42,6 +42,18 @@
             },
             "share_free": {
                 "default": "mdi:folder-network"
+            },
+            "cpu_usage": {
+                "default": "mdi:cpu-64-bit"
+            },
+            "cpu_temp": {
+                "default": "mdi:thermometer"
+            },
+            "cpu_power": {
+                "default": "mdi:flash"
+            },
+            "temp_sensor": {
+                "default": "mdi:thermometer"
             }
         }
     }
