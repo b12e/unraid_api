@@ -117,7 +117,6 @@ class CpuPackages(BaseModel):  # noqa: D101
 class Metrics(BaseModel):  # noqa: D101
     memory: MetricsMemory
     cpu: CpuUtilization | None = None
-    temperature: TemperatureMetrics | None = None
 
 
 class CpuUtilization(BaseModel):  # noqa: D101
@@ -129,24 +128,3 @@ class MetricsMemory(BaseModel):  # noqa: D101
     used: int = Field(alias="active")
     total: int
     percent_total: float = Field(alias="percentTotal")
-
-
-class TemperatureReading(BaseModel):  # noqa: D101
-    value: float
-
-
-class TemperatureSensor(BaseModel):  # noqa: D101
-    name: str
-    type: str
-    current: TemperatureReading
-    warning: float | None = None
-    critical: float | None = None
-
-
-class TemperatureSummary(BaseModel):  # noqa: D101
-    average: float
-
-
-class TemperatureMetrics(BaseModel):  # noqa: D101
-    sensors: list[TemperatureSensor]
-    summary: TemperatureSummary

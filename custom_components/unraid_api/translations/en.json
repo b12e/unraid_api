@@ -12,8 +12,7 @@
             "options": {
                 "data": {
                     "shares": "Monitor Shares",
-                    "drives": "Monitor Disks",
-                    "temperature": "Monitor Temperature Sensors"
+                    "drives": "Monitor Disks"
                 }
             },
             "reauth_key": {
@@ -24,8 +23,7 @@
             "reconfigure": {
                 "data": {
                     "shares": "Monitor Shares",
-                    "drives": "Monitor Disks",
-                    "temperature": "Monitor Temperature Sensors"
+                    "drives": "Monitor Disks"
                 }
             }
         },
@@ -115,9 +113,6 @@
             },
             "cpu_power": {
                 "name": "CPU power"
-            },
-            "temp_sensor": {
-                "name": "{sensor_name} Temperature"
             }
         }
     }

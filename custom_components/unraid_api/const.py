@@ -11,7 +11,6 @@ PLATFORMS = [Platform.SENSOR]
 
 CONF_SHARES: Final[str] = "shares"
 CONF_DRIVES: Final[str] = "drives"
-CONF_TEMPERATURE: Final[str] = "temperature"
 
 QUERY = """query Hass {
   server {
@@ -76,20 +75,6 @@ QUERY = """query Hass {
     }
     cpu {
       percentTotal
-    }
-    temperature {
-      sensors {
-        name
-        type
-        current {
-          value
-        }
-        warning
-        critical
-      }
-      summary {
-        average
-      }
     }
   }
   info {
@@ -157,24 +142,6 @@ SUB_MEMORY = """subscription MemoryUpdates {
     available
     active
     percentTotal
-  }
-}
-"""
-
-SUB_TEMPERATURE = """subscription TemperatureUpdates {
-  systemMetricsTemperature {
-    sensors {
-      name
-      type
-      current {
-        value
-      }
-      warning
-      critical
-    }
-    summary {
-      average
-    }
   }
 }
 """

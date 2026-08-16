@@ -16,7 +16,6 @@ from .const import (
     SUB_CPU,
     SUB_CPU_TELEMETRY,
     SUB_MEMORY,
-    SUB_TEMPERATURE,
 )
 
 if TYPE_CHECKING:
@@ -26,7 +25,7 @@ if TYPE_CHECKING:
 
     from . import UnraidConfigEntry
     from .api import UnraidApiClient
-    from .models import Disk, QueryResponse, Share, TemperatureSensor
+    from .models import Disk, QueryResponse, Share
     from .websocket import UnraidWebSocketClient
 
 _LOGGER = logging.getLogger(__name__)
@@ -47,7 +46,6 @@ class UnraidDataUpdateCoordinator(DataUpdateCoordinator[UnraidServerData]):
 
     known_disks: set[str]
     known_shares: set[str]
-    known_temp_sensors: set[str]
 
     def __init__(
         self,
@@ -69,73 +67,74 @@ class UnraidDataUpdateCoordinator(DataUpdateCoordinator[UnraidServerData]):
         self._ws_connected = False
         self.disk_callbacks: set[Callable[[Disk], None]] = set()
         self.share_callbacks: set[Callable[[Share], None]] = set()
-        self.temp_sensor_callbacks: set[Callable[[TemperatureSensor], None]] = set()
-        self._pending_new_disks: list[str] = []
-        self._pending_new_shares: list[str] = []
-        self._pending_new_temp_sensors: list[str] = []
 
     async def _async_setup(self) -> None:
         self.known_disks: set[str] = set()
         self.known_shares: set[str] = set()
-        self.known_temp_sensors: set[str] = set()
         await self._try_connect_ws()
 
     async def _async_update_data(self) -> UnraidServerData:
         query_response = await self.api_client.query()
         disks: dict[str, Disk] = {}
         shares: dict[str, Share] = {}
-        self._pending_new_disks = []
-        self._pending_new_shares = []
+        new_disks: list[str] = []
+        new_shares: list[str] = []
 
         for disk in query_response.array.disks:
             disks[disk.name] = disk
             if disk.name not in self.known_disks:
                 self.known_disks.add(disk.name)
-                self._pending_new_disks.append(disk.name)
+                new_disks.append(disk.name)
 
         for disk in query_response.array.parities:
             disks[disk.name] = disk
             if disk.name not in self.known_disks:
                 self.known_disks.add(disk.name)
-                self._pending_new_disks.append(disk.name)
+                new_disks.append(disk.name)
 
         for disk in query_response.array.caches:
             disks[disk.name] = disk
             if disk.name not in self.known_disks:
                 self.known_disks.add(disk.name)
-                self._pending_new_disks.append(disk.name)
+                new_disks.append(disk.name)
 
         for share in query_response.shares:
             shares[share.name] = share
             if share.name not in self.known_shares:
                 self.known_shares.add(share.name)
-                self._pending_new_shares.append(share.name)
-
-        self._pending_new_temp_sensors = []
-        if query_response.metrics.temperature:
-            for sensor in query_response.metrics.temperature.sensors:
-                if sensor.name not in self.known_temp_sensors:
-                    self.known_temp_sensors.add(sensor.name)
-                    self._pending_new_temp_sensors.append(sensor.name)
+                new_shares.append(share.name)
 
         result = UnraidServerData(data=query_response, disks=disks, shares=shares)
 
-        if self._pending_new_disks or self._pending_new_shares or self._pending_new_temp_sensors:
-            self.hass.async_create_task(self._fire_pending_callbacks(result))
+        if new_disks or new_shares:
+            # Snapshot the currently registered callbacks: a platform that subscribes
+            # between now and the task running gets these items from subscribe_*
+            # already, so firing at it here too would create every entity twice.
+            self.hass.async_create_task(
+                self._fire_pending_callbacks(
+                    result,
+                    new_disks,
+                    new_shares,
+                    set(self.disk_callbacks),
+                    set(self.share_callbacks),
+                )
+            )
 
         return result
 
-    async def _fire_pending_callbacks(self, data: UnraidServerData) -> None:
-        """Fire callbacks for newly discovered disks/shares/sensors after data is committed."""
-        for disk_name in self._pending_new_disks:
-            self._do_callback(self.disk_callbacks, data["disks"][disk_name])
-        for share_name in self._pending_new_shares:
-            self._do_callback(self.share_callbacks, data["shares"][share_name])
-        if data["data"].metrics.temperature:
-            temp_by_name = {s.name: s for s in data["data"].metrics.temperature.sensors}
-            for sensor_name in self._pending_new_temp_sensors:
-                if sensor_name in temp_by_name:
-                    self._do_callback(self.temp_sensor_callbacks, temp_by_name[sensor_name])
+    async def _fire_pending_callbacks(
+        self,
+        data: UnraidServerData,
+        new_disks: list[str],
+        new_shares: list[str],
+        disk_callbacks: set[Callable[[Disk], None]],
+        share_callbacks: set[Callable[[Share], None]],
+    ) -> None:
+        """Fire callbacks for newly discovered disks/shares after data is committed."""
+        for disk_name in new_disks:
+            self._do_callback(disk_callbacks, data["disks"][disk_name])
+        for share_name in new_shares:
+            self._do_callback(share_callbacks, data["shares"][share_name])
 
     @ha_callback
     def subscribe_disks(self, callback: Callable[[Disk], None]) -> None:
@@ -148,14 +147,6 @@ class UnraidDataUpdateCoordinator(DataUpdateCoordinator[UnraidServerData]):
         self.share_callbacks.add(callback)
         for share_name in self.known_shares:
             callback(self.data["shares"][share_name])
-
-    @ha_callback
-    def subscribe_temp_sensors(self, callback: Callable[[TemperatureSensor], None]) -> None:
-        self.temp_sensor_callbacks.add(callback)
-        if self.data["data"].metrics.temperature:
-            for sensor in self.data["data"].metrics.temperature.sensors:
-                if sensor.name in self.known_temp_sensors:
-                    callback(sensor)
 
     def _do_callback(
         self, callbacks: set[Callable[..., None]], *args: tuple[Any], **kwargs: dict[Any]
@@ -193,7 +184,6 @@ class UnraidDataUpdateCoordinator(DataUpdateCoordinator[UnraidServerData]):
             (SUB_CPU, "systemMetricsCpu", self._handle_cpu_update),
             (SUB_CPU_TELEMETRY, "systemMetricsCpuTelemetry", self._handle_cpu_telemetry_update),
             (SUB_MEMORY, "systemMetricsMemory", self._handle_memory_update),
-            (SUB_TEMPERATURE, "systemMetricsTemperature", self._handle_temperature_update),
         ]
         for query, field, handler in subscriptions:
             task = self.hass.async_create_task(
@@ -223,7 +213,7 @@ class UnraidDataUpdateCoordinator(DataUpdateCoordinator[UnraidServerData]):
             if self._ws_connected:
                 self._ws_connected = False
                 self.update_interval = POLL_INTERVAL_DEFAULT
-                _LOGGER.warning(
+                _LOGGER.debug(
                     "WSS subscription lost, reverting to polling at %s",
                     POLL_INTERVAL_DEFAULT,
                 )
@@ -260,13 +250,6 @@ class UnraidDataUpdateCoordinator(DataUpdateCoordinator[UnraidServerData]):
                 mem.total = data["total"]
             if "percentTotal" in data:
                 mem.percent_total = data["percentTotal"]
-
-    def _handle_temperature_update(self, data: dict[str, Any]) -> None:
-        """Handle temperature subscription update."""
-        if self.data:
-            from .models import TemperatureMetrics
-
-            self.data["data"].metrics.temperature = TemperatureMetrics.model_validate(data)
 
     async def async_shutdown(self) -> None:
         """Clean up WebSocket connection on unload."""

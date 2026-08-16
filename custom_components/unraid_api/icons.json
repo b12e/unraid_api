@@ -51,9 +51,6 @@
             },
             "cpu_power": {
                 "default": "mdi:flash"
-            },
-            "temp_sensor": {
-                "default": "mdi:thermometer"
             }
         }
     }

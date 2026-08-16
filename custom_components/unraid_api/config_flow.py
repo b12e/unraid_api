@@ -17,7 +17,7 @@ from homeassistant.helpers.typing import UNDEFINED, UndefinedType
 
 from . import UnraidConfigEntry
 from .api import UnraidApiClient, UnraidGraphQLError
-from .const import CONF_DRIVES, CONF_SHARES, CONF_TEMPERATURE, DOMAIN
+from .const import CONF_DRIVES, CONF_SHARES, DOMAIN
 
 if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigFlowResult
@@ -43,7 +43,6 @@ OPTIONS_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_DRIVES, default=True): BooleanSelector(),
         vol.Required(CONF_SHARES, default=True): BooleanSelector(),
-        vol.Required(CONF_TEMPERATURE, default=True): BooleanSelector(),
     }
 )
 
