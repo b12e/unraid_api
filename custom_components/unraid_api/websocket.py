@@ -194,7 +194,7 @@ class UnraidWebSocketClient:
                 except asyncio.QueueFull:
                     pass
             if not self._shutdown:
-                _LOGGER.warning("WebSocket connection lost")
+                _LOGGER.debug("WebSocket connection lost")
 
     async def _handle_message(self, data: dict[str, Any]) -> None:
         """Handle a single protocol message."""

@@ -14,6 +14,18 @@ if TYPE_CHECKING:
 _LOGGER = logging.getLogger(__name__)
 
 
+def _format_errors(errors: Any) -> str:
+    """Build a readable message from a GraphQL errors array."""
+    if not isinstance(errors, list):
+        return str(errors)
+
+    messages = []
+    for entry in errors:
+        message = entry.get("message") if isinstance(entry, dict) else None
+        messages.append(str(message) if message else str(entry))
+    return ", ".join(messages) or "Unknown GraphQL error"
+
+
 class UnraidGraphQLError(Exception):
     """Raised when the response contains errors."""
 
@@ -46,10 +58,14 @@ class UnraidApiClient:
         )
         result = await response.json()
 
-        if "errors" in result:
-            error_msg = ", ".join(entry.get("message") for entry in result["errors"])
+        if result.get("errors"):
+            error_msg = _format_errors(result["errors"])
             _LOGGER.error("Error in query response: %s", error_msg)
             raise UnraidGraphQLError(error_msg)
+
+        if "data" not in result:
+            msg = f"Unexpected response without data: {result}"
+            raise UnraidGraphQLError(msg)
         return result["data"]
 
     async def query(self) -> QueryResponse:
